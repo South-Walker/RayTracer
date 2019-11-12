@@ -1,5 +1,5 @@
 # RayTracer
-## 间接
+## 简介
 开坑光线追踪，初步计划是读完Peter Shirley的[光线追踪三部曲](https://github.com/RayTracing/InOneWeekend)
 ## 光线追踪：一个周末（Ray Tracing in One Weekend）
 代码已上传，基于文章最后项目渲染得到的图像如下<br><br>
