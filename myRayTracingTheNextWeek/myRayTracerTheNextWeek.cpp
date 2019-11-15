@@ -6,25 +6,9 @@
 #include "hitable.h"
 #include "camera.h"
 #include "material.h"
+#include "bvh.h"
 #include <fstream>
 #include <sstream>
-float hit_sphere(const vec3& center, float radius, const ray& r)
-{
-	vec3 oc = r.origin() - center;
-	float a = dot(r.direction(), r.direction());
-	float b = 2.0 * dot(oc, r.direction());
-	float c = dot(oc, oc) - radius * radius;
-	float discriminant = b * b - 4 * a * c;
-	if (discriminant < 0)
-	{
-		return -1.0;
-	}
-	else
-	{
-		return (-b - sqrt(discriminant)) / 2.0 / a;
-	}
-	return discriminant > 0;
-}
 vec3 color(const ray& r, hitable* world, int depth = 0)
 {
 	hit_record rec;
@@ -48,7 +32,7 @@ vec3 color(const ray& r, hitable* world, int depth = 0)
 		return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
 	}
 }
-hitable* random_scene()
+hitable_list* random_scene()
 {
 	int n = 50000;
 	hitable** list = new hitable * [n + 1];
@@ -91,10 +75,11 @@ int main(int argc, char** argv)
 {
 	int nx = 1920;
 	int ny = 1080;
-	int ns = 100;
+	int ns = 10;
 	int worldseed = 96;
 	SetSeed(worldseed);
-	hitable* world = random_scene();
+	hitable_list* hlworld = random_scene();
+	bvh_node world(hlworld->list, hlworld->list_size, 0.001, FLT_MAX);
 	int seed = 0;
 	std::cin >> seed;
 	SetSeed(seed);
@@ -124,7 +109,7 @@ int main(int argc, char** argv)
 				float u = float(i + drand48()) / float(nx);
 				float v = float(j + drand48()) / float(ny);
 				ray r = cam.get_ray(u, v);
-				col += color(r, world);
+				col += color(r, &world);
 			}
 			col /= float(ns);
 			col = vec3(sqrt(col[0]), sqrt(col[1]), sqrt(col[2]));
