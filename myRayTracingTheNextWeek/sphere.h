@@ -3,6 +3,14 @@
 #include "hitable.h"
 #include "vec3.h"
 #include "aabb.h"
+
+void get_sphere_uv(const vec3& p, float& u, float& v)
+{
+	float phi = atan2(p.z(), p.x());
+	float theta = asin(p.y());
+	u = 1 - (phi + 3.14159) / (2 * 3.14159);
+	v = (theta + 3.14159 / 2) / 3.14159;
+}
 class sphere :public hitable
 {
 public:
@@ -28,7 +36,8 @@ bool sphere::hit(const ray& r, float tmin, float tmax, hit_record& rec) const
 			rec.t = temp;
 			rec.p = r.point_at_parameter(rec.t);
 			rec.normal = (rec.p - center) / radius;
-			rec.mat_ptr = mat;
+			rec.mat_ptr = mat; 
+			get_sphere_uv(rec.p, rec.u, rec.v);
 			return true;
 		}
 		temp = (-b + sqrt(b * b - a * c)) / a;
@@ -38,6 +47,7 @@ bool sphere::hit(const ray& r, float tmin, float tmax, hit_record& rec) const
 			rec.p = r.point_at_parameter(rec.t);
 			rec.normal = (rec.p - center) / radius;
 			rec.mat_ptr = mat;
+			get_sphere_uv(rec.p, rec.u, rec.v);
 			return true;
 		}
 	}
