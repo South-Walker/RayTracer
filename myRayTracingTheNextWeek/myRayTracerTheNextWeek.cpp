@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "sphere.h"
 #include "rectangle.h"
+#include "box.h"
 #include "float.h"
 #include "hitable_list.h"
 #include "hitable.h"
@@ -29,7 +30,7 @@ vec3 color(const ray& r, hitable* world, int depth = 0)
 	}
 	else
 	{
-		return vec3(0, 0, 0);
+		return vec3(0.1, 0.1, 0.1);
 		/*
 		//环境光
 		vec3 unit_direction = unit_vector(r.direction());
@@ -38,23 +39,32 @@ vec3 color(const ray& r, hitable* world, int depth = 0)
 		*/
 	}
 }
-hitable_list* simple_light()
+hitable_list* cornell_box()
 {
-	texture* pertext = new noise_texture(4);
-	hitable** list = new hitable * [4];
-	list[0] = new sphere(vec3(0, -1000, 0), 1000, new lambertian(pertext));
-	list[1] = new sphere(vec3(0, 2, 0), 2, new lambertian(pertext));
-	list[2] = new sphere(vec3(0, 7, 0), 2, 
-		new diffuse_light(
-			new constant_texture(vec3(4, 4, 4))
-		)
+	hitable** list = new hitable * [100];
+	int i = 0;
+	material* red = new lambertian(
+		new constant_texture(vec3(0.65, 0.05, 0.05))
 	);
-	list[3] = new xy_rect(3, 5, 1, 3, -2, 
-		new diffuse_light(
-			new constant_texture(vec3(4, 4, 4))
-		)
+	material* white = new lambertian(
+		new constant_texture(vec3(0.73, 0.73, 0.73))
 	);
-	return new hitable_list(list, 4);
+	material* green = new lambertian(
+		new constant_texture(vec3(0.12, 0.45, 0.15))
+	);
+	material* light = new diffuse_light(
+		new constant_texture(vec3(15, 15, 15))
+	);
+	list[i++] = new flip_normals(new yz_rect(-50, 605, -50, 605, 805, green));
+	list[i++] = new yz_rect(-50, 605, -50, 605, -250, red);
+	list[i++] = new xz_rect(188, 368, 202, 357, 605, light);
+	list[i++] = new flip_normals(new xz_rect(-250, 805, -50, 605, 605, white));
+	list[i++] = new xz_rect(-250, 805, -50, 605, 0, white);
+	list[i++] = new flip_normals(new xy_rect(-250, 805, -50, 605, 605, white));
+	list[i++] = new box(vec3(70, 0, 40), vec3(270, 215, 255), white);
+	list[i++] = new box(vec3(240, 0, 270), vec3(455, 380, 460), white);
+
+	return new hitable_list(list, i);
 }
 int main(int argc, char** argv)
 {
@@ -63,16 +73,17 @@ int main(int argc, char** argv)
 	int ns = 1;
 	int worldseed = 96;
 	SetSeed(worldseed);
-	hitable_list* hlworld = simple_light();
+	hitable_list* hlworld = cornell_box();
 	bvh_node world(hlworld->list, hlworld->list_size, 0.001, FLT_MAX);
 	int seed = 0;
 	std::cin >> seed;
 	SetSeed(seed);
-	vec3 lookfrom(13, 2, 3);
-	vec3 lookat(0, 0, 0);
-	float dist_to_focus = (lookfrom - lookat).length();
+	vec3 lookfrom(278, 278, -800);
+	vec3 lookat(278, 278, 0);
+	float dist_to_focus = 10;
 	float aperture = 0.0;
-	camera cam(lookfrom, lookat, vec3(0, 1, 0), 20, float(nx) / float(ny),
+	float fov = 40;
+	camera cam(lookfrom, lookat, vec3(0, 1, 0), fov, float(nx) / float(ny),
 		aperture, dist_to_focus, 0.0, 1.0);
 	std::ofstream fout;
 	std::ostringstream filepath;
