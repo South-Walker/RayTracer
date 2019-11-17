@@ -46,41 +46,43 @@ public:
 			(1 + sin(scale * p.z() + 10 * noise.turb(p)));
 	}
 };
-int* load_image_texture_file(std::string filepath, int& width, int& height)
+float* load_image_texture_file(std::string filepath, int& width, int& height)
 {
 	std::ifstream fin;
 	fin.open(filepath);
 	fin >> width >> height;
 	int len = width * height * 3;
 	int temp;
-	int* rc = new int[width * height * 3];
+	float* rc = new float[width * height * 3];
 	for (int i = 0; i < len; i++)
 	{
-		fin >> rc[i];
+		fin >> temp;
+		rc[i] = temp / 255.0;
 	}
 	return rc;
 }
 class image_texture : public texture
 {
 public:
-	int* data;
+	float* data;
 	int nx, ny;
 	image_texture() {}
-	image_texture(int* pixels, int A, int B)
+	image_texture(float* pixels, int A, int B)
 		: data(pixels), nx(A), ny(B) {}
 	virtual vec3 value(float u, float v, const vec3& p)const;
 };
 vec3 image_texture::value(float u, float v, const vec3& p) const
 {
-	int i = (u)* nx;
+	int i = u * nx;
 	int j = (1 - v) * ny - 0.001;
 	if (i < 0)i = 0;
 	if (j < 0)j = 0;
 	if (i > nx - 1)i = nx - 1;
 	if (j > ny - 1)j = ny - 1;
-	float r = int(data[3 * i + 3 * nx * j]);
-	float g = int(data[3 * i + 3 * nx * j + 1]);
-	float b = int(data[3 * i + 3 * nx * j + 2]);
+	int base = 3 * j + 3 * ny * i;
+	float r = data[base];
+	float g = data[base + 1];
+	float b = data[base + 2];
 	return vec3(r, g, b);
 }
 #endif // !texture

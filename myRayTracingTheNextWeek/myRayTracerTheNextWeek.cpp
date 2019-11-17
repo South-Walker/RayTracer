@@ -35,13 +35,8 @@ vec3 color(const ray& r, hitable* world, int depth = 0)
 hitable_list* two_perlin_spheres()
 {
 	int nx, ny;
-#if _WIN32
-	std::string texpos = "./img5-01.imgtexture";
-	int* tex_data = load_image_texture_file(texpos, nx, ny);
-#else
-	std::string texpos = "./img5-01.imgtexture";
-	unsigned char* tex_data = load_image_texture_file(texpos, nx, ny);
-#endif
+	std::string texpos = "./earth.imgtexture";
+	float* tex_data = load_image_texture_file(texpos, nx, ny);
 	material* mat = new lambertian(new image_texture(tex_data, nx, ny));
 	hitable** list = new hitable * [1];
 	list[0] = new sphere(vec3(0, 0, 0), 1, mat);
@@ -49,8 +44,8 @@ hitable_list* two_perlin_spheres()
 }
 int main(int argc, char** argv)
 {
-	int nx = 192;
-	int ny = 108;
+	int nx = 1920;
+	int ny = 1080;
 	int ns = 1;
 	int worldseed = 96;
 	SetSeed(worldseed);
@@ -59,7 +54,8 @@ int main(int argc, char** argv)
 	int seed = 0;
 	std::cin >> seed;
 	SetSeed(seed);
-	vec3 lookfrom(13, 2, 3);
+	//vec3 lookfrom(13, 2, 3);
+	vec3 lookfrom(0, 0, 10);
 	vec3 lookat(0, 0, 0);
 	float dist_to_focus = (lookfrom - lookat).length();
 	float aperture = 0.0;
