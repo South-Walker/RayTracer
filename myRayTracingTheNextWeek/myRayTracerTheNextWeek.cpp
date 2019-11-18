@@ -3,12 +3,15 @@
 #include "sphere.h"
 #include "rectangle.h"
 #include "box.h"
-#include "float.h"
 #include "hitable_list.h"
 #include "hitable.h"
+#include "translate.h"
+#include "rotate.h"
+#include "constant_medium.h"
 #include "camera.h"
 #include "material.h"
 #include "bvh.h"
+#include <float.h>
 #include <fstream>
 #include <sstream>
 vec3 color(const ray& r, hitable* world, int depth = 0)
@@ -61,9 +64,18 @@ hitable_list* cornell_box()
 	list[i++] = new flip_normals(new xz_rect(-250, 805, -50, 605, 605, white));
 	list[i++] = new xz_rect(-250, 805, -50, 605, 0, white);
 	list[i++] = new flip_normals(new xy_rect(-250, 805, -50, 605, 605, white));
-	list[i++] = new box(vec3(70, 0, 40), vec3(270, 215, 255), white);
-	list[i++] = new box(vec3(240, 0, 270), vec3(455, 380, 460), white);
-
+	hitable* b1 = new translate(
+		new rotate_y(
+			new box(vec3(-60, 0, -25), vec3(140, 215, 190), white), -18
+		)
+		, vec3(130, 0, 65));
+	hitable* b2 = new translate(
+		new rotate_y(
+			new box(vec3(-25, 0, -25), vec3(190, 380, 165), white), 15
+		)
+		, vec3(265, 0, 295));
+	list[i++] = new constant_medium(b1, 0.01, new constant_texture(vec3(1.0, 1.0, 1.0)));
+	list[i++] = new constant_medium(b2, 0.01, new constant_texture(vec3(0, 0, 0)));
 	return new hitable_list(list, i);
 }
 int main(int argc, char** argv)

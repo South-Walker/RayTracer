@@ -46,6 +46,8 @@ int main(int argc, char** argv)
 	for (int i = 0; i < count; i++)
 	{
 		pixel[i] /= filecount;
+		pixel[i] = (pixel[i]>255)?255:pixel[i];
+		pixel[i] = (pixel[i]<0)?0:pixel[i];
 	}
 	ostringstream filepath;
 	filepath << argv[1] << "/" << "output.ppm";
