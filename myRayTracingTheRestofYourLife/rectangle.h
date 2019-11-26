@@ -57,6 +57,10 @@ public:
 			float area = (x1 - x0) * (z1 - z0);
 			float distance_squared = rec.t * rec.t * v.squared_length();
 			float cosine = fabs(dot(v, rec.normal) / v.length());
+			if (cosine < 0.0000001)
+			{
+				return 0;
+			}
 			return distance_squared / (cosine * area);
 		}
 		else
@@ -66,8 +70,8 @@ public:
 	}
 	virtual vec3 random(const vec3& o) const
 	{
-		vec3 random_point = vec3(x0 + drand48() * (x1 - x0),
-			k, z0 + drand48() * (z1 - z0));
+		vec3 random_point = vec3(x0 + drand() * (x1 - x0),
+			k, z0 + drand() * (z1 - z0));
 		return random_point - o;
 	}
 };

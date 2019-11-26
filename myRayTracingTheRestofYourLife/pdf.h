@@ -44,7 +44,7 @@ public:
 	}
 	virtual vec3 generate() const
 	{
-		if (drand48() < 0.5)
+		if (drand() < 0.5)
 			return p[0]->generate();
 		else
 			return p[1]->generate();

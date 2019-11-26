@@ -43,7 +43,7 @@ bool constant_medium::hit(const ray& r, float t_min, float t_max, hit_record& re
 			float distance_inside_boundary = (rec2.t - rec1.t)
 				* r.direction().length();
 			//¾àÀëãÐÖµ
-			float hit_distance = -(1 / density) * log(drand48());
+			float hit_distance = -(1 / density) * log(drand());
 			if (hit_distance < distance_inside_boundary)
 			{
 				rec.t = rec1.t + hit_distance / r.direction().length();

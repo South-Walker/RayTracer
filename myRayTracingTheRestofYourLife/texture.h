@@ -1,6 +1,5 @@
 #ifndef TEXTUREH
 #define TEXTUREH
-#include "noise.h"
 #include <fstream>
 class texture
 {
@@ -32,18 +31,6 @@ public:
 			return odd->value(u, v, p);
 		else
 			return even->value(u, v, p);
-	}
-};
-class noise_texture : public texture
-{
-public:
-	float scale;
-	perlin noise;
-	noise_texture(float sc) :scale(sc) {}
-	virtual vec3 value(float u, float v, const vec3& p) const
-	{
-		return vec3(1, 1, 1) * 0.5 * 
-			(1 + sin(scale * p.z() + 10 * noise.turb(p)));
 	}
 };
 float* load_image_texture_file(std::string filepath, int& width, int& height)

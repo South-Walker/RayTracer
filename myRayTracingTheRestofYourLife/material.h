@@ -152,7 +152,7 @@ public:
 		{
 			reflect_prob = 1.0;
 		}
-		if ((float)rand() / RAND_MAX < reflect_prob)
+		if (drand() < reflect_prob)
 		{
 			scattered = ray(rec.p, reflacted);
 		}
