@@ -11,6 +11,7 @@
 #include "camera.h"
 #include "material.h"
 #include "bvh.h"
+#include "pdf.h"
 #include <float.h>
 #include <fstream>
 #include <sstream>
@@ -20,13 +21,23 @@ vec3 color(const ray& r, hitable* world, int depth = 0)
 	if (world->hit(r, 0.001, FLT_MAX, rec))
 	{
 		ray scattered;
-		vec3 emitted = rec.mat_ptr->emitted(rec.u, rec.v, rec.p);
-		float pdf;
+		vec3 emitted = rec.mat_ptr->emitted(r, rec, rec.u, rec.v, rec.p);
+		float pdf_val;
 		vec3 albedo;
-		if (depth < 30 && rec.mat_ptr->scatter(r, rec, albedo, scattered, pdf))
+		if (depth < 50 && rec.mat_ptr->scatter(r, rec, albedo, scattered, pdf_val))
 		{
+			hitable* light_shape = &xz_rect(213, 343, 227, 332, 554, 0);
+			hitable_pdf p0(light_shape, rec.p);
+			cosine_pdf p1(rec.normal);
+			mixture_pdf p(&p0, &p1);
+			scattered = ray(rec.p, p.generate(), r.time()); 
+			pdf_val = p.value(scattered.direction());
+			if (pdf_val < 0.00001)
+			{
+				return emitted;
+			}
 			return emitted + albedo * rec.mat_ptr->scattering_pdf(r, rec, scattered)
-				* color(scattered, world, depth + 1) / pdf;
+				* color(scattered, world, depth + 1) / pdf_val;
 		}
 		else
 		{
@@ -55,7 +66,7 @@ void cornell_box(hitable_list** scene, camera** cam, float aspect)
 	material* light = new diffuse_light(new constant_texture(vec3(15, 15, 15)));
 	list[i++] = new flip_normals(new yz_rect(0, 555, 0, 555, 555, green));
 	list[i++] = new yz_rect(0, 555, 0, 555, 0, red);
-	list[i++] = new xz_rect(213, 343, 227, 332, 554, light);
+	list[i++] = new flip_normals(new xz_rect(213, 343, 227, 332, 554, light));
 	list[i++] = new flip_normals(new xz_rect(0, 555, 0, 555, 555, white));
 	list[i++] = new xz_rect(0, 555, 0, 555, 0, white);
 	list[i++] = new flip_normals(new xy_rect(0, 555, 0, 555, 555, white));
@@ -178,7 +189,7 @@ int main(int argc, char** argv)
 	int ns = 1000;
 	nx = 500;
 	ny = 500;
-	ns = 100;
+	ns = 1000;
 
 	int worldseed = 96;
 	SetSeed(worldseed);

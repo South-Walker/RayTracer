@@ -34,7 +34,8 @@ vec3 random_in_unit_disk()
 	} while (dot(p, p) >= 1.0);
 	return p;
 }
-//pdf(dir) = cos(theta)/pi
+//pdf(theta) = sin(theta)/2
+//pdf(phi) = 1/2pi(¾ùÔÈ·Ö²¼)
 inline vec3 random_cosine_direction()
 {
 	float r1 = drand48();

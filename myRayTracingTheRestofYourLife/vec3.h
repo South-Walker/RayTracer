@@ -24,7 +24,13 @@ public:
 	
 	inline float length() const { return sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]); }
 	inline float squared_length() const { return e[0] * e[0] + e[1] * e[1] + e[2] * e[2]; }
-	inline void make_unit_vector();
+	inline void make_unit_vector()
+	{
+		float len = length();
+		e[0] /= len;
+		e[1] /= len;
+		e[2] /= len;
+	}
 
 	inline vec3& operator+=(const vec3& v2)
 	{
