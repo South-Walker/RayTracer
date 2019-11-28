@@ -9,6 +9,19 @@ public:
 	virtual float value(const vec3& direction) const = 0;
 	virtual vec3 generate() const = 0;
 };
+class zero_pdf : public pdf
+{
+public:
+	zero_pdf() {}
+	virtual float value(const vec3& direction) const
+	{
+		return 0;
+	}
+	virtual vec3 generate() const
+	{
+		return vec3(0, 0, 0);
+	}
+};
 class cosine_pdf : public pdf
 {
 public:

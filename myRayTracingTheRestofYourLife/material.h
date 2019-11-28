@@ -4,10 +4,17 @@
 #include "hitable_list.h"
 #include "texture.h"
 #include "onb.h"
+struct scatter_record
+{
+	ray specular_ray;
+	bool is_specular;
+	vec3 attenuation;
+	pdf* pdf_ptr;
+};
 class material
 {
 public:
-	virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& albedo, ray& scattered, float& pdf) const
+	virtual bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec) const
 	{
 		return false;
 	}
@@ -60,21 +67,17 @@ class lambertian : public material
 public:
 	texture* albedo;
 	lambertian(texture *a) : albedo(a) {}
-	float scattering_pdf(const ray& r_in, const hit_record& rec, const ray& scattered) const
+	virtual float scattering_pdf(const ray& r_in, const hit_record& rec, const ray& scattered) const
 	{
 		float cosine = dot(rec.normal, unit_vector(scattered.direction()));
 		if (cosine < 0)cosine = 0;
 		return cosine / 3.14159;
 	}
-	virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& alb, ray& scattered, float& pdf) const
+	virtual bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec) const
 	{
-		onb uvw;
-		uvw.build_from_w(rec.normal);
-		vec3 direction = uvw.local(random_cosine_direction());
-
-		scattered = ray(rec.p, unit_vector(direction),r_in.time());
-		alb = albedo->value(rec.u, rec.v, rec.p);
-		pdf = dot(uvw.w(), scattered.direction()) / 3.14159;
+		srec.is_specular = false;
+		srec.attenuation = albedo->value(hrec.u, hrec.v, hrec.p);
+		srec.pdf_ptr = new cosine_pdf(hrec.normal);
 		return true;
 	}
 };
@@ -88,12 +91,14 @@ public:
 	vec3 albedo;
 	float fuzz;
 	metal(const vec3& a, float f) : albedo(a) { if (f < 1)fuzz = f; else fuzz = 1; }
-	virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const
+	virtual bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec) const
 	{
-		vec3 reflected = reflect(unit_vector(r_in.direction()), rec.normal);
-		scattered = ray(rec.p, reflected + fuzz * random_in_unit_sphere());
-		attenuation = albedo;
-		return (dot(scattered.direction(), rec.normal) > 0);
+		vec3 reflected = reflect(unit_vector(r_in.direction()), hrec.normal);
+		srec.specular_ray = ray(hrec.p, reflected + fuzz * random_in_unit_sphere());
+		srec.attenuation = albedo;
+		srec.is_specular = true;
+		srec.pdf_ptr = 0;
+		return (dot(srec.specular_ray.direction(), hrec.normal) > 0);
 	}
 };
 bool refract(const vec3& v, const vec3& n, float ni_over_nt, vec3& refracted)

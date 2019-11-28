@@ -15,30 +15,37 @@
 #include <float.h>
 #include <fstream>
 #include <sstream>
-vec3 color(const ray& r, hitable* world, int depth = 0)
+vec3 color(const ray& r, hitable* world, hitable* light_shape, int depth = 0)
 {
-	static xz_rect light = xz_rect(213, 343, 227, 332, 554, 0);
-	hit_record rec;
-	if (world->hit(r, 0.001, FLT_MAX, rec))
+	hit_record hrec;
+	if (world->hit(r, 0.001, FLT_MAX, hrec))
 	{
+		scatter_record srec;
+		vec3 emitted = hrec.mat_ptr->emitted(r, hrec, hrec.u, hrec.v, hrec.p);
 		ray scattered;
-		vec3 emitted = rec.mat_ptr->emitted(r, rec, rec.u, rec.v, rec.p);
 		float pdf_val;
-		vec3 albedo;
-		if (depth < 50 && rec.mat_ptr->scatter(r, rec, albedo, scattered, pdf_val))
+		if (depth < 50 && hrec.mat_ptr->scatter(r, hrec, srec))
 		{
-			hitable* light_shape = &light;
-			hitable_pdf p0(light_shape, rec.p);
-			cosine_pdf p1(rec.normal);
-			mixture_pdf p(&p0, &p1);
-			scattered = ray(rec.p, p.generate(), r.time());
+			if (srec.is_specular)
+			{
+				return srec.attenuation * color(srec.specular_ray, world, light_shape, depth + 1);
+			}
+			hitable_pdf plight(light_shape, hrec.p);
+			if (srec.pdf_ptr == 0)
+			{
+				std::cout << "aa" << std::endl;
+			}
+			mixture_pdf p(&plight, srec.pdf_ptr);
+			scattered = ray(hrec.p, p.generate(), r.time());
 			pdf_val = p.value(scattered.direction());
+			delete srec.pdf_ptr;
+
 			if (pdf_val < 0.00001)
 			{
 				return emitted;
 			}
-			return emitted + albedo * rec.mat_ptr->scattering_pdf(r, rec, scattered)
-				* color(scattered, world, depth + 1) / pdf_val;
+			return emitted + srec.attenuation * hrec.mat_ptr->scattering_pdf(r, hrec, scattered)
+				* color(scattered, world, light_shape, depth + 1) / pdf_val;
 		}
 		else
 		{
@@ -76,9 +83,10 @@ void cornell_box(hitable_list** scene, camera** cam, float aspect)
 			new box(vec3(0, 0, 0), vec3(165, 165, 165), white), -18)
 		, vec3(130, 0, 65)
 	);
+	material* aluminum = new metal(vec3(0.8, 0.85, 0.88), 0.0);
 	list[i++] = new translate(
 		new rotate_y(
-			new box(vec3(0, 0, 0), vec3(165, 330, 165), white), 15)
+			new box(vec3(0, 0, 0), vec3(165, 330, 165), aluminum), 15)
 		, vec3(265, 0, 295)
 	);
 	*scene = new hitable_list(list, i);
@@ -134,7 +142,7 @@ int main(int argc, char** argv)
 	int ns = 1000;
 	nx = 500;
 	ny = 500;
-	ns = 10;
+	ns = 1000;
 
 	/*
 	hitable_list* hlworld = final();
@@ -154,6 +162,10 @@ int main(int argc, char** argv)
 	hitable_list** phlworld = new hitable_list*;
 	camera** ppcam = new camera*;
 	cornell_box(phlworld, ppcam, float(nx) / float(ny));
+
+	xz_rect light = xz_rect(213, 343, 227, 332, 554, 0);
+	xz_rect* plight = &light;
+
 	hitable_list* hlworld = *phlworld;
 	camera cam = **ppcam;
 	bvh_node world(hlworld->list, hlworld->list_size, 0.001, FLT_MAX);
@@ -180,7 +192,7 @@ int main(int argc, char** argv)
 				float v = float(j + drand()) / float(ny);
 				ray r = cam.get_ray(u, v);
 
-				col += color(r, &world);
+				col += color(r, &world, plight);
 			}
 			col /= float(ns);
 			col = vec3(sqrt(col[0]), sqrt(col[1]), sqrt(col[2]));
