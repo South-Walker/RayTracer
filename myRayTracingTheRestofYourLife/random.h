@@ -37,6 +37,16 @@ vec3 random_in_unit_sphere()
 	} while (dot(p, p) >= 1.0);
 	return p;
 }
+vec3 random_to_sphere(float radius, float distance_squared)
+{
+	float r1 = drand();
+	float r2 = drand();
+	float z = 1 + r2 * (sqrt(1 - radius * radius / distance_squared) - 1);
+	float phi = 2 * 3.14159 * r1;
+	float x = cos(phi) * sqrt(1 - z * z);
+	float y = sin(phi) * sqrt(1 - z * z);
+	return vec3(x, y, z);
+}
 //p落在xoy平面上一个原点在o的半径为1的圆中
 vec3 random_in_unit_disk()
 {

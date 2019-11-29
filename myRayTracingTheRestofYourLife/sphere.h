@@ -2,7 +2,9 @@
 #define SPHEREH
 #include "hitable.h"
 #include "vec3.h"
+#include "random.h"
 #include "aabb.h"
+#include <float.h>
 
 void get_sphere_uv(const vec3& p, float& u, float& v)
 {
@@ -19,8 +21,30 @@ public:
 	material* mat;
 	sphere(vec3 cen, float r, material* m) :center(cen), radius(r), mat(m) {};
 	virtual bool bounding_box(float t0, float t1, aabb& box) const;
+	virtual float pdf_value(const vec3& o, const vec3& v) const;
 	virtual bool hit(const ray& r, float tmin, float tmax, hit_record& rec) const;
+	virtual vec3 random(const vec3& o) const;
 };
+float sphere::pdf_value(const vec3& o, const vec3& v) const
+{
+	hit_record rec;
+	if (this->hit(ray(o, v), 0.001, FLT_MAX, rec))
+	{
+		float cos_theta_max = sqrt(1 - radius * radius / (center - o).squared_length());
+		float solid_angle = 2 * 3.14159 * (1 - cos_theta_max);
+		return 1 / solid_angle;
+	}
+	else
+		return 0;
+}
+vec3 sphere::random(const vec3& o) const
+{
+	vec3 direction = center - o;
+	float distance_squared = direction.squared_length();
+	onb uvw;
+	uvw.build_from_w(direction);
+	return uvw.local(random_to_sphere(radius, distance_squared));
+}
 bool sphere::hit(const ray& r, float tmin, float tmax, hit_record& rec) const
 {
 	vec3 oc = r.origin() - center;

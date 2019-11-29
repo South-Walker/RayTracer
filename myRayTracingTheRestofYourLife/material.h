@@ -127,27 +127,28 @@ class dielectric : public material
 public:
 	float ref_idx;
 	dielectric(float ri) : ref_idx(ri) {}
-	virtual bool scatter(const ray& r_in, const hit_record& rec, vec3& attenuation, ray& scattered) const
+	virtual bool scatter(const ray& r_in, const hit_record& hrec, scatter_record& srec) const
 	{
 		vec3 outward_normal;
-		attenuation = vec3(0.9, 0.9, 0.9);
-		vec3 reflacted = reflect(r_in.direction(), rec.normal);
+		srec.is_specular = true;
+		srec.attenuation = vec3(0.9, 0.9, 0.9);
+		vec3 reflacted = reflect(r_in.direction(), hrec.normal);
 		float ni_over_nt;
 		vec3 refracted;
 		float reflect_prob;
 		float cosine;
 		//Éä³öÈ¥
-		if (dot(r_in.direction(), rec.normal) > 0)
+		if (dot(r_in.direction(), hrec.normal) > 0)
 		{
-			outward_normal = -rec.normal;
+			outward_normal = -hrec.normal;
 			ni_over_nt = ref_idx;
-			cosine = ref_idx * dot(r_in.direction(), rec.normal) / r_in.direction().length();
+			cosine = ref_idx * dot(r_in.direction(), hrec.normal) / r_in.direction().length();
 		}
 		else
 		{
-			outward_normal = rec.normal;
+			outward_normal = hrec.normal;
 			ni_over_nt = 1.0 / ref_idx;
-			cosine = -dot(r_in.direction(), rec.normal) / r_in.direction().length();
+			cosine = -dot(r_in.direction(), hrec.normal) / r_in.direction().length();
 		}
 		if (refract(r_in.direction(), outward_normal, ni_over_nt, refracted))
 		{
@@ -159,11 +160,11 @@ public:
 		}
 		if (drand() < reflect_prob)
 		{
-			scattered = ray(rec.p, reflacted);
+			srec.specular_ray = ray(hrec.p, reflacted);
 		}
 		else
 		{
-			scattered = ray(rec.p, refracted);
+			srec.specular_ray = ray(hrec.p, refracted);
 		}
 		return true;
 	}

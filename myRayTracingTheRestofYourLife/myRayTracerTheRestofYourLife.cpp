@@ -31,10 +31,6 @@ vec3 color(const ray& r, hitable* world, hitable* light_shape, int depth = 0)
 				return srec.attenuation * color(srec.specular_ray, world, light_shape, depth + 1);
 			}
 			hitable_pdf plight(light_shape, hrec.p);
-			if (srec.pdf_ptr == 0)
-			{
-				std::cout << "aa" << std::endl;
-			}
 			mixture_pdf p(&plight, srec.pdf_ptr);
 			scattered = ray(hrec.p, p.generate(), r.time());
 			pdf_val = p.value(scattered.direction());
@@ -78,17 +74,18 @@ void cornell_box(hitable_list** scene, camera** cam, float aspect)
 	list[i++] = new flip_normals(new xz_rect(0, 555, 0, 555, 555, white));
 	list[i++] = new xz_rect(0, 555, 0, 555, 0, white);
 	list[i++] = new flip_normals(new xy_rect(0, 555, 0, 555, 555, white));
+	//list[i++] = new translate(
+		//new rotate_y(
+			//new box(vec3(0, 0, 0), vec3(165, 165, 165), white), -18)
+		//, vec3(130, 0, 65)
+	//);
+	material* aluminum = new dielectric(1.5);
 	list[i++] = new translate(
 		new rotate_y(
-			new box(vec3(0, 0, 0), vec3(165, 165, 165), white), -18)
-		, vec3(130, 0, 65)
-	);
-	material* aluminum = new metal(vec3(0.8, 0.85, 0.88), 0.0);
-	list[i++] = new translate(
-		new rotate_y(
-			new box(vec3(0, 0, 0), vec3(165, 330, 165), aluminum), 15)
+			new box(vec3(0, 0, 0), vec3(165, 330, 165), white), 15)
 		, vec3(265, 0, 295)
 	);
+	list[i++] = new sphere(vec3(190, 90, 190), 90, aluminum);
 	*scene = new hitable_list(list, i);
 	vec3 lookfrom(278, 278, -800);
 	vec3 lookat(278, 278, 0);
@@ -98,42 +95,6 @@ void cornell_box(hitable_list** scene, camera** cam, float aspect)
 	*cam = new camera(lookfrom, lookat, vec3(0, 1, 0),
 		vfov, aspect, aperture, dist_to_focus, 0.0, 1.0);
 }
-hitable_list* cornell_box()
-{
-	hitable** list = new hitable * [100];
-	int i = 0;
-	material* red = new lambertian(
-		new constant_texture(vec3(0.65, 0.05, 0.05))
-	);
-	material* white = new lambertian(
-		new constant_texture(vec3(0.73, 0.73, 0.73))
-	);
-	material* green = new lambertian(
-		new constant_texture(vec3(0.12, 0.45, 0.15))
-	);
-	material* light = new diffuse_light(
-		new constant_texture(vec3(15, 15, 15))
-	);
-	list[i++] = new flip_normals(new yz_rect(-50, 605, -50, 605, 805, green));
-	list[i++] = new yz_rect(-50, 605, -50, 605, -250, red);
-	list[i++] = new xz_rect(188, 368, 202, 357, 605, light);
-	list[i++] = new flip_normals(new xz_rect(-250, 805, -50, 605, 605, white));
-	list[i++] = new xz_rect(-250, 805, -50, 605, 0, white);
-	list[i++] = new flip_normals(new xy_rect(-250, 805, -50, 605, 605, white));
-	hitable* b1 = new translate(
-		new rotate_y(
-			new box(vec3(-60, 0, -25), vec3(140, 215, 190), white), -18
-		)
-		, vec3(130, 0, 65));
-	hitable* b2 = new translate(
-		new rotate_y(
-			new box(vec3(-25, 0, -25), vec3(190, 380, 165), white), 15
-		)
-		, vec3(265, 0, 295));
-	list[i++] = new constant_medium(b1, 0.01, new constant_texture(vec3(1.0, 1.0, 1.0)));
-	list[i++] = new constant_medium(b2, 0.01, new constant_texture(vec3(0, 0, 0)));
-	return new hitable_list(list, i);
-}
 
 int main(int argc, char** argv)
 {
@@ -142,7 +103,7 @@ int main(int argc, char** argv)
 	int ns = 1000;
 	nx = 500;
 	ny = 500;
-	ns = 1000;
+	ns = 10;
 
 	/*
 	hitable_list* hlworld = final();
@@ -163,8 +124,12 @@ int main(int argc, char** argv)
 	camera** ppcam = new camera*;
 	cornell_box(phlworld, ppcam, float(nx) / float(ny));
 
-	xz_rect light = xz_rect(213, 343, 227, 332, 554, 0);
-	xz_rect* plight = &light;
+	hitable* plight = new xz_rect(213, 343, 227, 332, 554, 0);
+	hitable* psphere = new sphere(vec3(190, 90, 190), 90, 0);
+	hitable* a[2];
+	a[0] = plight;
+	a[1] = psphere;
+	hitable_list* hlist = new hitable_list(a, 2);
 
 	hitable_list* hlworld = *phlworld;
 	camera cam = **ppcam;
@@ -192,7 +157,7 @@ int main(int argc, char** argv)
 				float v = float(j + drand()) / float(ny);
 				ray r = cam.get_ray(u, v);
 
-				col += color(r, &world, plight);
+				col += color(r, &world, hlist);
 			}
 			col /= float(ns);
 			col = vec3(sqrt(col[0]), sqrt(col[1]), sqrt(col[2]));
