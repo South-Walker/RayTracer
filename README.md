@@ -12,5 +12,5 @@
 图像为1920*1080像素，每个像素点在20个不同的cpu上同时基于不同的随机种子采样，每次任务采样1000次，得到的20张图各像素取平均。<br>
 
 ## 光线追踪：余生（Ray Tracing The Rest Of Your Life）
-代码已上传，修改dielectric材质后渲染得到下图<br><br>
+代码已上传，修改dielectric材质后并利用重要性采样算法渲染得到下图<br><br>
 ![](/img/out3.png)<br><br>
